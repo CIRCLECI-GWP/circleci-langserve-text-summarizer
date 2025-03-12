@@ -61,6 +61,11 @@ jobs:
           command: |
             docker build -t us-central1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/images/text-summarizer:latest .
       - run:
+          name: Explicit Docker Login
+          command: |
+            export PATH=$HOME/google-cloud-sdk/bin:$PATH
+            docker login -u _json_key -p "$(cat ${HOME}/gcloud-service-key.json)" us-central1-docker.pkg.dev
+      - run:
           name: Push Docker Image
           command: |
             export PATH=$HOME/google-cloud-sdk/bin:$PATH
