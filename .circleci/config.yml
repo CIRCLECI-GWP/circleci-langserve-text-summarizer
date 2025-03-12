@@ -49,6 +49,7 @@ jobs:
       - run:
           name: Create Artifact Registry Repository
           command: |
+            export PATH=$HOME/google-cloud-sdk/bin:$PATH
             gcloud artifacts repositories create images \
               --repository-format=docker \
               --location=us-central1 \
@@ -65,6 +66,7 @@ jobs:
       - run:
           name: Deploy to Google Cloud Run
           command: |
+            export PATH=$HOME/google-cloud-sdk/bin:$PATH
             gcloud run deploy text-summarizer \
               --image=us-central1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/images/text-summarizer:latest \
               --platform=managed \
