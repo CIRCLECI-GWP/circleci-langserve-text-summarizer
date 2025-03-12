@@ -1,0 +1,74 @@
+version: 2.1
+
+jobs:
+  build-and-deploy:
+    docker:
+      - image: cimg/python:3.12.9
+    steps:
+      - checkout
+      # Enable Docker support
+      - setup_remote_docker:
+          docker_layer_caching: true
+      # Install dependencies and run tests
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+      - run:
+          name: Install Dependencies
+          command: |
+            python -m venv venv
+            . venv/bin/activate
+            pip install --no-cache-dir -r requirements.txt
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+      - run:
+          name: Run Tests
+          command: |
+            . venv/bin/activate
+            pytest tests/ -v
+      # Build docker image
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/text-summarizer:latest .
+      - run:
+          name: Authenticate Google Cloud
+          command: |
+            echo $GOOGLE_CLOUD_KEYFILE_JSON | base64 -d > ${HOME}/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+            gcloud config set project $GOOGLE_CLOUD_PROJECT
+            gcloud auth configure-docker us-docker.pkg.dev
+      - run:
+          name: Create Artifact Registry Repository
+          command: |
+            gcloud artifacts repositories create images \
+              --repository-format=docker \
+              --location=us-central1 \
+              --project=$GOOGLE_CLOUD_PROJECT \
+              --if-not-exists
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build -t us-central1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/images/text-summarizer:latest .
+      - run:
+          name: Push Docker Image
+          command: |
+            docker push us-central1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/images/text-summarizer:latest
+      - run:
+          name: Deploy to Google Cloud Run
+          command: |
+            gcloud run deploy text-summarizer \
+              --image=us-central1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/images/text-summarizer:latest \
+              --platform=managed \
+              --region=us-central1 \
+              --allow-unauthenticated \
+              --update-env-vars GOOGLE_API_KEY=$GOOGLE_API_KEY
+
+workflows:
+  build-deploy:
+    jobs:
+      - build-and-deploy:
+          context: 
+           - gcp-deploy

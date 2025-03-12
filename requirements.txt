@@ -1,0 +1,12 @@
+langserve
+fastapi
+sse_starlette
+uvicorn
+python-dotenv
+langchain
+langchain-google-genai                                                                                                                                       
+google-generativeai
+requests
+pytest
+pypdf
+nest-asyncio
