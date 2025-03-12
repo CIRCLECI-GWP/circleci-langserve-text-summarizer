@@ -9,6 +9,11 @@ jobs:
       # Enable Docker support
       - setup_remote_docker:
           docker_layer_caching: true
+      - run:
+          name: Install Google Cloud SDK
+          command: |
+            curl https://sdk.cloud.google.com | bash > /dev/null 2>&1
+            source $HOME/google-cloud-sdk/path.bash.inc
       # Install dependencies and run tests
       - restore_cache:
           keys:
