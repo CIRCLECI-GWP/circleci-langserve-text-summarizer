@@ -61,6 +61,7 @@ jobs:
       - run:
           name: Push Docker Image
           command: |
+            export PATH=$HOME/google-cloud-sdk/bin:$PATH
             docker push us-central1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/images/text-summarizer:latest
       - run:
           name: Deploy to Google Cloud Run
