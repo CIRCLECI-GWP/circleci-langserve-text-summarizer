@@ -53,8 +53,7 @@ jobs:
             gcloud artifacts repositories create images \
               --repository-format=docker \
               --location=us-central1 \
-              --project=$GOOGLE_CLOUD_PROJECT \
-              --if-not-exists
+              --project=$GOOGLE_CLOUD_PROJECT
       - run:
           name: Build Docker Image
           command: |
