@@ -44,12 +44,6 @@ def create_summarization_chain():
         temperature=0.3
     )
     
-    # Create the chain
-    # chain = LLMChain(
-    #     llm=llm,
-    #     prompt=summarization_prompt,
-    #     verbose=True
-    # )
     chain = summarization_prompt | llm | StrOutputParser()
     
     return chain
