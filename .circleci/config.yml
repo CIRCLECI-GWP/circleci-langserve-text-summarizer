@@ -50,10 +50,12 @@ jobs:
           name: Create Artifact Registry Repository
           command: |
             export PATH=$HOME/google-cloud-sdk/bin:$PATH
-            gcloud artifacts repositories create images \
-              --repository-format=docker \
-              --location=us-central1 \
-              --project=$GOOGLE_CLOUD_PROJECT
+            if ! gcloud artifacts repositories describe images --location=us-central1 --project=$GOOGLE_CLOUD_PROJECT > /dev/null 2>&1; then
+              gcloud artifacts repositories create images \
+                --repository-format=docker \
+                --location=us-central1 \
+                --project=$GOOGLE_CLOUD_PROJECT
+            fi
       - run:
           name: Build Docker Image
           command: |
