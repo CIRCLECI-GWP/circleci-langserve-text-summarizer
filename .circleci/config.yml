@@ -41,6 +41,7 @@ jobs:
       - run:
           name: Authenticate Google Cloud
           command: |
+            export PATH=$HOME/google-cloud-sdk/bin:$PATH
             echo $GOOGLE_CLOUD_KEYFILE_JSON | base64 -d > ${HOME}/gcloud-service-key.json
             gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
             gcloud config set project $GOOGLE_CLOUD_PROJECT
