@@ -1,0 +1,6 @@
+{
+    "circleci.filters.branchFilter": "allBranches",
+    "circleci.persistedProjectSelection": [
+        "circleci/HGSagjpTawCA6MfhFZpWEt/XqCKHN5a7DQ1yDERSysjz6"
+    ]
+}
