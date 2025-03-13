@@ -11,5 +11,9 @@ COPY tests/ ./tests/
 # Make port 80 available to the world outside this container
 EXPOSE 80
 
+# Create a non-root user and switch to it
+RUN useradd -m appuser && chown -R appuser /app
+USER appuser
+
 # Run app.py when the container launches
 CMD [ "python", "app.py" ]
