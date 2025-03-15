@@ -23,7 +23,7 @@ In academic writing when summarizing external sources you need to:
 - Do not include your interpretation/analysis within the summary
 - Vary your introductions and attributions to sources, like "according to..." or "so-and-so concludes that..." 
   Don't bore your readers!
-- Always include citations 
+- Always include in-text citations and reference list at the end in APA style.
 
 TEXT: {text}
 
