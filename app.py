@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.responses import HTMLResponse
 from langserve import add_routes
 from chain import create_summarization_chain
 import pypdf
@@ -21,17 +22,26 @@ app = FastAPI(
     version="1.0.0",
 )
 
+@app.get("/", response_class=HTMLResponse)
+def read_root():
+    return """
+    <html>
+        <head>
+            <title>FastAPI Home</title>
+        </head>
+        <body>
+            <h1>Welcome to LangServe API!</h1>
+            <p>Click below to summarise your text in Langserve playground:</p>
+            <a href="/summarize/playground" style="font-size: 18px; color: blue;">Langserve Playground</a>
+            <h1>Test FastAPI!</h1>
+            <p>Click below to access the API documentation and test the API:</p>
+            <a href="/docs" style="font-size: 18px; color: blue;">Go to Swagger UI</a>
+        </body>
+    </html>
+    """
+
 # Create the summarization chain
 summarization_chain = create_summarization_chain()
-
-# Define some helper functions to upload files
-def extract_text_from_pdf(file_path):
-    text = ""
-    with open(file_path, "rb") as file:
-        reader = pypdf.PdfReader(file)
-        for page in reader.pages:
-            text += page.extract_text() or ""
-    return text
 
 # Add LangServe route
 add_routes(
@@ -39,32 +49,44 @@ add_routes(
     summarization_chain,
     path="/summarize",
 )
-# Endpoint for file upload and summarization
-@app.post("/upload-and-summarize")
-async def upload_and_summarize(file: UploadFile = File(...)):
-    try:
-        # Read file content
-        file_content = await file.read()
-        temp_file = tempfile.NamedTemporaryFile(delete=False)
-        temp_file.write(file_content)
-        temp_file_path = temp_file.name
-        temp_file.close()
-        extracted_text = extract_text_from_pdf(temp_file_path)
-        # Process with summarization chain
-        result = summarization_chain.invoke({"text": extracted_text})
-        
-        # return {"summary": result["text"]}
-        return {"summary": result["output"]["text"]}
-    except Exception as e:
-        logger.error(f"Error processing file: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
-# Add langchain route for pdf uploads
-add_routes(
-    app,
-    summarization_chain,
-    path="/upload-and-summarize",
-)
+@app.post("/summarize-pdf/", description="Upload a PDF file to be summarized")
+async def summarize_pdf(file: UploadFile = File(...)):
+    # Check if the uploaded file is a PDF
+    if not file.filename.endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Uploaded file must be a PDF")
+    
+    try:
+        # Create a temporary file to save the uploaded PDF
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+            # Read the uploaded file content
+            content = await file.read()
+            # Write the content to the temporary file
+            temp_file.write(content)
+            temp_file.flush()
+            
+            # Extract text from the PDF
+            pdf_reader = pypdf.PdfReader(temp_file.name)
+            text = ""
+            for page in pdf_reader.pages:
+                text += page.extract_text() or ""
+            
+            if not text.strip():
+                raise HTTPException(status_code=400, detail="No text could be extracted from the PDF")
+            
+            # Log the text length for debugging
+            logger.info(f"Extracted {len(text)} characters from PDF")
+            
+            # Use the summarization chain to process the extracted text
+            result = summarization_chain.invoke({"text": text})
+            
+            return {
+                "filename": file.filename,
+                "summary": result["summary"] if "summary" in result else result
+            }
+    except Exception as e:
+        logger.error(f"Error processing PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
