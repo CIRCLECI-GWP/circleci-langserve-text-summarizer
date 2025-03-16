@@ -1,3 +1,4 @@
+# Import necessary libraries
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
