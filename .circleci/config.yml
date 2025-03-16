@@ -85,4 +85,4 @@ workflows:
     jobs:
       - build-and-deploy:
           context: 
-           - gcp_deploy
+           - gcp_deploy2
