@@ -1,11 +1,14 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse
-from langserve import add_routes
-from chain import create_summarization_chain
 import pypdf
 import tempfile
 import uvicorn
 import logging
+
+# Move langserve import to the top.
+from langserve import add_routes
+
+from chain import create_summarization_chain
 
 # Configure logging
 logging.basicConfig(
