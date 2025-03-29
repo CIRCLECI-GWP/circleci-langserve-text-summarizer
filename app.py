@@ -53,7 +53,7 @@ summarization_chain = create_summarization_chain()
 add_routes(
     app,
     summarization_chain,
-    path="/summarize/",
+    path="/summarize",
     input_type=SummarizeBatchRequest,
 )
 
