@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build-and-deploy:
     docker:
-      - image: cimg/python:3.11-slim
+      - image: cimg/python:3.9-slim
     steps:
       - checkout
       # Enable Docker support
@@ -33,10 +33,10 @@ jobs:
             . venv/bin/activate
             pytest tests/ -v
       # Build docker image on CircleCI
-      - run:
-          name: Build Docker Image
-          command: |
-            docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/text-summarizer:latest .
+      # - run:
+      #     name: Build Docker Image
+      #     command: |
+      #       docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/text-summarizer:latest .
       # Now working in Artifacts Registry
       - run:
           name: Authenticate Google Cloud
