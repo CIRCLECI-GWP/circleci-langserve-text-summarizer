@@ -2,6 +2,7 @@ langserve
 fastapi
 sse_starlette
 uvicorn
+pydantic
 python-dotenv
 langchain
 langchain-google-genai                                                                                                                                       
