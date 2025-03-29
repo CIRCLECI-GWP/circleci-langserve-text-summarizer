@@ -7,7 +7,6 @@ from pydantic import BaseModel
 import logging
 
 # Move langserve import to the top.
-import langserve.validation
 from langserve import add_routes
 
 from chain import create_summarization_chain

@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build-and-deploy:
     docker:
-      - image: cimg/python:3.12.9
+      - image: cimg/python:3.9-slim
     steps:
       - checkout
       # Enable Docker support
@@ -32,12 +32,7 @@ jobs:
           command: |
             . venv/bin/activate
             pytest tests/ -v
-      # Build docker image on CircleCI
-      - run:
-          name: Build Docker Image
-          command: |
-            docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/text-summarizer:latest .
-      # Now working in Artifacts Registry
+      # Authenticate with Google Cloud
       - run:
           name: Authenticate Google Cloud
           command: |
@@ -45,9 +40,15 @@ jobs:
             echo $GOOGLE_CLOUD_KEYFILE_JSON | base64 -d > ${HOME}/gcloud-service-key.json
             gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
             gcloud config set project $GOOGLE_CLOUD_PROJECT
-            gcloud auth configure-docker us-docker.pkg.dev
+      # Configure Docker to use Google Cloud auth
       - run:
-          name: Create Artifact Registry Repository
+          name: Configure Docker Authentication
+          command: |
+            export PATH=$HOME/google-cloud-sdk/bin:$PATH
+            gcloud auth configure-docker us-central1-docker.pkg.dev
+      # Create Artifact Registry repository if it doesn't exist
+      - run:
+          name: Create Artifact Registry Repository if needed
           command: |
             export PATH=$HOME/google-cloud-sdk/bin:$PATH
             if ! gcloud artifacts repositories describe images --location=us-central1 --project=$GOOGLE_CLOUD_PROJECT > /dev/null 2>&1; then
@@ -56,20 +57,14 @@ jobs:
                 --location=us-central1 \
                 --project=$GOOGLE_CLOUD_PROJECT
             fi
+      # Build and push the image directly to Artifact Registry
       - run:
-          name: Build Docker Image
+          name: Build and Push Docker Image
           command: |
+            export PATH=$HOME/google-cloud-sdk/bin:$PATH
             docker build -t us-central1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/images/text-summarizer:latest .
-      - run:
-          name: Explicit Docker Login
-          command: |
-            export PATH=$HOME/google-cloud-sdk/bin:$PATH
-            docker login -u _json_key -p "$(cat ${HOME}/gcloud-service-key.json)" us-central1-docker.pkg.dev
-      - run:
-          name: Push Docker Image
-          command: |
-            export PATH=$HOME/google-cloud-sdk/bin:$PATH
             docker push us-central1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/images/text-summarizer:latest
+      # Deploy to Cloud Run
       - run:
           name: Deploy to Google Cloud Run
           command: |
@@ -85,5 +80,5 @@ workflows:
   build-deploy:
     jobs:
       - build-and-deploy:
-          context: 
-           - gcp_deploy
+          context:
+            - gcp_deploy
