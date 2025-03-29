@@ -7,7 +7,6 @@ from pydantic import BaseModel
 import logging
 
 # Move langserve import to the top.
-
 from langserve import add_routes
 
 from chain import create_summarization_chain
@@ -15,20 +14,11 @@ from chain import create_summarization_chain
 class SummarizeBatchRequest(BaseModel):
     text: str
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger("llm-summarizer")
-
-
 # Create FastAPI app
 app = FastAPI(
     title="Text Summarization API",
     description="An API for summarizing text using Google's Gemini model",
     version="1.0.0",
-    input_type=SummarizeBatchRequest,
 )
 
 @app.get("/", response_class=HTMLResponse)
@@ -49,14 +39,22 @@ def read_root():
     </html>
     """
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger("llm-summarizer")
+
 # Create the summarization chain
 summarization_chain = create_summarization_chain()
 
-# Add LangServe route
+# Add LangServe route with explicit input/output typing
 add_routes(
     app,
     summarization_chain,
     path="/summarize",
+    input_type=SummarizeBatchRequest,
 )
 
 @app.post("/summarize-pdf/", description="Upload a PDF file to be summarized")
@@ -64,7 +62,7 @@ async def summarize_pdf(file: UploadFile = File(...)):
     # Check if the uploaded file is a PDF
     if not file.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Uploaded file must be a PDF")
-    
+        
     try:
         # Create a temporary file to save the uploaded PDF
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
@@ -73,22 +71,22 @@ async def summarize_pdf(file: UploadFile = File(...)):
             # Write the content to the temporary file
             temp_file.write(content)
             temp_file.flush()
-            
+                        
             # Extract text from the PDF
             pdf_reader = pypdf.PdfReader(temp_file.name)
             text = ""
             for page in pdf_reader.pages:
                 text += page.extract_text() or ""
-            
+                        
             if not text.strip():
                 raise HTTPException(status_code=400, detail="No text could be extracted from the PDF")
-            
+                        
             # Log the text length for debugging
             logger.info(f"Extracted {len(text)} characters from PDF")
-            
+                        
             # Use the summarization chain to process the extracted text
             result = summarization_chain.invoke({"text": text})
-            
+                        
             return {
                 "filename": file.filename,
                 "summary": result["summary"] if "summary" in result else result
