@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 import pypdf
 import tempfile
 import uvicorn
+from pydantic import BaseModel
 import logging
 
 # Move langserve import to the top.
