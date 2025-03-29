@@ -7,9 +7,15 @@ from pydantic import BaseModel
 import logging
 
 # Move langserve import to the top.
+
 from langserve import add_routes
 
 from chain import create_summarization_chain
+
+class SummarizeBatchRequest(BaseModel):
+    text: str
+# Explicitly rebuild the model
+SummarizeBatchRequest.model_rebuild()
 
 # Configure logging
 logging.basicConfig(
