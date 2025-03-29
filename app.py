@@ -14,8 +14,6 @@ from chain import create_summarization_chain
 
 class SummarizeBatchRequest(BaseModel):
     text: str
-# Explicitly rebuild the model
-SummarizeBatchRequest.model_rebuild()
 
 # Configure logging
 logging.basicConfig(
@@ -30,6 +28,7 @@ app = FastAPI(
     title="Text Summarization API",
     description="An API for summarizing text using Google's Gemini model",
     version="1.0.0",
+    input_type=SummarizeBatchRequest,
 )
 
 @app.get("/", response_class=HTMLResponse)
